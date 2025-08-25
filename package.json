@@ -1,5 +1,103 @@
 {
-  "dependencies": {
-    "pandas": "^0.0.3"
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Importing necessary libraries\n",
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import re\n",
+    "import nltk\n",
+    "from nltk.corpus import stopwords\n",
+    "from nltk.stem import WordNetLemmatizer\n",
+    "from sklearn.feature_extraction.text import TfidfVectorizer\n",
+    "import os\n",
+    "print(\"Current Working Directory:\", os.getcwd())\n",
+    "\n",
+    "# Downloading necessary NLTK resources\n",
+    "nltk.download('punkt')\n",
+    "nltk.download('stopwords')\n",
+    "nltk.download('wordnet')\n",
+    "nltk.download('punkt_tab')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Loading the dataset and creating a dataframe\n",
+    "df = pd.read_csv(\"amazon_reviews.csv\")\n",
+    "df.head()\n",
+    "\n",
+    "# Keep only relevant columns (review text + rating)\n",
+    "df = df[[\"Review Text\", \"Rating\"]]\n",
+    "\n",
+    "# Dropping missing values\n",
+    "df.dropna(inplace=True)\n",
+    "\n",
+    "# Extracting reviews column as text\n",
+    "reviews = df[\"Review Text\"].astype(str)\n",
+    "\n",
+    "print(\"Cleaned dataset shape:\", df.shape)\n",
+    "reviews.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Cleaning function\n",
+    "lemmatizer = WordNetLemmatizer()\n",
+    "stop_words = set(stopwords.words(\"english\"))\n",
+    "\n",
+    "def clean_text(text):\n",
+    "    # Lowercase\n",
+    "    text = text.lower()\n",
+    "    # Remove punctuation, numbers, special characters\n",
+    "    text = re.sub(r'[^a-z\\s]', '', text)\n",
+    "    # Tokenize\n",
+    "    tokens = nltk.word_tokenize(text)\n",
+    "    # Remove stopwords + Lemmatize\n",
+    "    tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]\n",
+    "    return \" \".join(tokens)\n",
+    "\n",
+    "# Apply cleaning\n",
+    "cleaned_reviews = reviews.apply(clean_text)\n",
+    "print(\"Sample cleaned review:\\n\", cleaned_reviews.iloc[0])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Convert text into numerical form using TF-IDF\n",
+    "vectorizer = TfidfVectorizer(max_features=1000)  # adjust max_features if needed\n",
+    "X = vectorizer.fit_transform(cleaned_reviews)\n",
+    "\n",
+    "print(\"TF-IDF Matrix shape:\", X.shape)"
+   ]
   }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python",
+   "version": "3.10"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
 }
